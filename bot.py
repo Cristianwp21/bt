@@ -3,7 +3,15 @@ import pandas as pd
 import numpy as np
 import time
 from telegram import Bot
-
+name: bot-env
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - python-binance=1.0.16
+  - pycryptodome=3.18.0
+  - requests=2.31.0
+  - pandas=2.0.3
 # Configurações da API da Binance
 API_KEY = "WGppsqHCM893qJD9IeAx20SzEw5Ewdb1IzUBzS0r9gHZRiAP8LPbtK3l1RWqwQKZ"
 API_SECRET = "QrPiz5LYJS20oRJZb3JX7W5Ts7Bd7WrZ36PlG389JaHrfxHv0Th0Jd0uTZd345cB"
