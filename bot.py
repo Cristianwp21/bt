@@ -33,63 +33,53 @@ def enviar_alerta(mensagem):
 
 # Função para calcular o RSI
 def calculate_rsi(data, period=14):
-    close_prices = pd.Series([float(kline[4]) for kline in data])
+    close_prices = pd.Series([float(kline[4]) for kline in data])  # Preços de fechamento
     delta = close_prices.diff()
-    gain = delta.where(delta > 0, 0).rolling(window=period).mean()
-    loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
-    return rsi.fillna(0).tolist()
+    return rsi.fillna(0).tolist()  # Retorna o RSI como lista
 
 # Função para buscar dados de mercado
 def get_market_data(symbol, interval, limit=100):
-    return client.get_klines(symbol=symbol, interval=interval, limit=limit)
+    klines = client.get_klines(symbol=symbol, interval=interval, limit=limit)
+    return klines
 
-# Função para verificar divergências
-def verificar_divergencias(data, rsi, lookback_right=100, lookback_left=8):
-    close_prices = [float(kline[4]) for kline in data]
-    lows = [float(kline[3]) for kline in data]
-    highs = [float(kline[2]) for kline in data]
+# Função para pegar todos os pares de negociação
+def get_all_pairs():
+    exchange_info = client.get_exchange_info()
+    symbols = [s['symbol'] for s in exchange_info['symbols'] if s['status'] == 'TRADING']
+    return symbols
 
-    # Bullish Divergence
-    for i in range(lookback_right, len(rsi)):
-        if i - lookback_left < 0:
-            continue
-        rsi_hl = rsi[i] > rsi[i - lookback_right]
-        price_ll = lows[i] < lows[i - lookback_right]
-        if rsi_hl and price_ll:
-            return "Bullish Divergence Detected!"
-
-    # Bearish Divergence
-    for i in range(lookback_right, len(rsi)):
-        if i - lookback_left < 0:
-            continue
-        rsi_lh = rsi[i] < rsi[i - lookback_right]
-        price_hh = highs[i] > highs[i - lookback_right]
-        if rsi_lh and price_hh:
-            return "Bearish Divergence Detected!"
-
-    return None
+# Função para enviar alertas via Telegram (caso queira implementar)
+def enviar_alerta(mensagem, token, chat_id):
+    bot = Bot(token=token)
+    bot.send_message(chat_id=chat_id, text=mensagem)
 
 # Função principal do bot
 def run_bot():
+    # Pega todos os pares de moedas disponíveis na Binance
+    pairs = get_all_pairs()
+    
     while True:
-        try:
-            # Busca os dados de mercado
-            market_data = get_market_data(SYMBOL, INTERVAL)
-            rsi = calculate_rsi(market_data)
+        for symbol in pairs:
+            try:
+                # Busca os dados de mercado para o par atual
+                market_data = get_market_data(symbol, INTERVAL)
+                rsi = calculate_rsi(market_data)
 
-            # Verifica divergências
-            alerta = verificar_divergencias(market_data, rsi)
-            if alerta:
-                enviar_alerta(alerta)
-                print(alerta)
+                # Exemplo de análise: RSI abaixo de 30 (sobrevendido)
+                if rsi[-1] < 30:
+                    print(f"Alerta: RSI de {symbol} está sobrevendido ({rsi[-1]:.2f})")
+                    # Enviar alerta via Telegram aqui, se configurado
 
-            # Pausa antes da próxima verificação
-            time.sleep(60)
-        except Exception as e:
-            print(f"Erro: {e}")
-            time.sleep(60)
+                # Pausa antes da próxima verificação
+                time.sleep(60)  # Aguarda 1 minuto
+
+            except Exception as e:
+                print(f"Erro ao verificar o par {symbol}: {e}")
+                time.sleep(60)  # Aguarda 1 minuto antes de tentar novamente
 
 if __name__ == "__main__":
     run_bot()
