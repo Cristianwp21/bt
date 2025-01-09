@@ -16,7 +16,7 @@ INTERVAL = Client.KLINE_INTERVAL_15MINUTE  # Intervalo de 15 minutos
 
 # Configurações do Telegram
 TELEGRAM_TOKEN = "7676787815:AAHLOCqbmuQgJN8NDgxvsgnyoH_nMhWCbyM"
-CHAT_ID = "SEU_CHAT_ID_AQUI"
+CHAT_ID = "1234567890"
 
 # Função para enviar alertas no Telegram
 def enviar_alerta(mensagem):
